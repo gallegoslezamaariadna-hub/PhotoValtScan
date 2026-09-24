@@ -1,5 +1,6 @@
 package com.photovaltscan.app.ui.screens.project_detail
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.photovaltscan.app.R
 import com.photovaltscan.app.ui.theme.PrimaryBlue
 
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectDetailScreen(
@@ -32,6 +34,49 @@ fun ProjectDetailScreen(
     onStartChecklist: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var locationText by remember { mutableStateOf("Buscando señal GPS...") }
+
+    val fusedLocationClient = remember { com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context) }
+
+    val locationPermissionRequest = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        when {
+            permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) ||
+            permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, com.google.android.gms.tasks.CancellationTokenSource().token)
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            locationText = "Lat: ${String.format("%.4f", location.latitude)}°\nLon: ${String.format("%.4f", location.longitude)}°"
+                        } else {
+                            locationText = "Ubicación no disponible"
+                        }
+                    }
+            }
+            else -> {
+                locationText = "Permiso denegado"
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, com.google.android.gms.tasks.CancellationTokenSource().token)
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        locationText = "Lat: ${String.format("%.4f", location.latitude)}°\nLon: ${String.format("%.4f", location.longitude)}°"
+                    } else {
+                        locationText = "Ubicación no disponible"
+                    }
+                }
+        } else {
+            locationPermissionRequest.launch(arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -113,7 +158,7 @@ fun ProjectDetailScreen(
 
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             InfoItem(icon = Icons.Filled.LocationOn, label = "DIRECCIÓN FÍSICA", value = "Av. Industrial Sector 4, Lote 12B\nZona Franca, Parque Tecnológico")
-                            InfoItem(icon = Icons.Filled.MyLocation, label = "COORDENADAS GPS", value = "Lat: 19.4326° N\nLon: 99.1332° W")
+                            InfoItem(icon = Icons.Filled.MyLocation, label = "COORDENADAS GPS", value = locationText)
                             InfoItem(icon = Icons.Filled.Person, label = "RESPONSABLE ASIGNADO", value = "Arq. Roberto Méndez")
                         }
                     }

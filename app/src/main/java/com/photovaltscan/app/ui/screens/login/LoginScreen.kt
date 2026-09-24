@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onLoginSuccessAdmin: () -> Unit,
+    onLoginSuccessSupport: () -> Unit,
     onNavigateToRegister: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -49,6 +50,10 @@ fun LoginScreen(
             is AuthState.LoginSuccessAdmin -> {
                 viewModel.resetState()
                 onLoginSuccessAdmin()
+            }
+            is AuthState.LoginSuccessSupport -> {
+                viewModel.resetState()
+                onLoginSuccessSupport()
             }
             is AuthState.Error -> {
                 Toast.makeText(context, (authState as AuthState.Error).message, Toast.LENGTH_SHORT).show()

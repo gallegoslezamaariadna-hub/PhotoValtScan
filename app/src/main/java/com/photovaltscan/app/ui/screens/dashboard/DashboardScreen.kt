@@ -37,7 +37,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
-    onProjectClick: (String) -> Unit
+    onProjectClick: (String) -> Unit,
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToSync: () -> Unit = {},
+    onNavigateToProjects: () -> Unit = {},
+    onNavigateToReports: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val projects by viewModel.projects.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -75,16 +80,16 @@ fun DashboardScreen(
 
                     // Menu Items
                     Column(modifier = Modifier.padding(vertical = 16.dp).weight(1f)) {
-                        DrawerMenuItem(icon = Icons.Filled.Dashboard, label = "Dashboard", isSelected = true)
-                        DrawerMenuItem(icon = Icons.Filled.Assignment, label = "Proyectos")
-                        DrawerMenuItem(icon = Icons.Filled.SyncAlt, label = "Sincronización", modifier = Modifier.clickable { scope.launch { drawerState.close(); onProjectClick("sync") } })
-                        DrawerMenuItem(icon = Icons.Filled.Analytics, label = "Reportes")
-                        DrawerMenuItem(icon = Icons.Filled.Settings, label = "Configuración / Perfil")
+                        DrawerMenuItem(icon = Icons.Filled.Dashboard, label = "Dashboard", isSelected = true, onClick = { scope.launch { drawerState.close() } })
+                        DrawerMenuItem(icon = Icons.Filled.Assignment, label = "Proyectos", onClick = { scope.launch { drawerState.close(); onNavigateToProjects() } })
+                        DrawerMenuItem(icon = Icons.Filled.SyncAlt, label = "Sincronización", onClick = { scope.launch { drawerState.close(); onNavigateToSync() } })
+                        DrawerMenuItem(icon = Icons.Filled.Analytics, label = "Reportes", onClick = { scope.launch { drawerState.close(); onNavigateToReports() } })
+                        DrawerMenuItem(icon = Icons.Filled.Settings, label = "Configuración / Perfil", onClick = { scope.launch { drawerState.close(); onNavigateToProfile() } })
                     }
 
                     Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     // Footer Drawer
-                    DrawerMenuItem(icon = Icons.Filled.Logout, label = "Cerrar Sesión", modifier = Modifier.padding(vertical = 16.dp))
+                    DrawerMenuItem(icon = Icons.Filled.Logout, label = "Cerrar Sesión", onClick = { scope.launch { drawerState.close(); onLogout() } })
                 }
             }
         }
@@ -97,11 +102,11 @@ fun DashboardScreen(
                             Image(
                                 painter = painterResource(id = R.mipmap.ic_launcher_foreground),
                                 contentDescription = "Logo",
-                                modifier = Modifier.size(32.dp).clip(CircleShape).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                                modifier = Modifier.size(28.dp).clip(CircleShape).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                                 contentScale = ContentScale.Crop
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("PhotoValtScan", fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("PhotoValtScan", fontWeight = FontWeight.Bold, color = PrimaryBlue, fontSize = 16.sp, maxLines = 1)
                         }
                     },
                     navigationIcon = {
@@ -113,7 +118,7 @@ fun DashboardScreen(
                         IconButton(onClick = { /* Search */ }) {
                             Icon(Icons.Filled.Search, contentDescription = "Buscar")
                         }
-                        IconButton(onClick = { onProjectClick("sync") }) {
+                        IconButton(onClick = { onNavigateToSync() }) {
                             Icon(Icons.Filled.Sync, contentDescription = "Sincronizar")
                         }
                         IconButton(onClick = { /* Notifications */ }) {
@@ -128,12 +133,14 @@ fun DashboardScreen(
                                 )
                             }
                         }
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = "Perfil",
-                            modifier = Modifier.padding(end = 16.dp, start = 8.dp).size(32.dp),
-                            tint = MaterialTheme.colorScheme.outline
-                        )
+                        IconButton(onClick = onNavigateToProfile) {
+                            Icon(
+                                imageVector = Icons.Filled.AccountCircle,
+                                contentDescription = "Perfil",
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
                 )
@@ -214,19 +221,19 @@ fun DashboardScreen(
 }
 
 @Composable
-fun DrawerMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean = false, modifier: Modifier = Modifier) {
+fun DrawerMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean = false, onClick: () -> Unit) {
     val bgColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
     val contentColor = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
     val fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
+        modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .fillMaxWidth()
             .height(48.dp)
             .background(bgColor, RoundedCornerShape(50))
-            .clickable { /* Select */ }
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp)
     ) {
         Icon(icon, contentDescription = null, tint = contentColor)

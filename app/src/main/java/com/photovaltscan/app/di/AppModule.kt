@@ -29,7 +29,9 @@ object AppModule {
             app,
             AppDatabase::class.java,
             "photovaltscan_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides

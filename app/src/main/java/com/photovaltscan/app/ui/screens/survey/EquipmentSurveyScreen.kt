@@ -1,6 +1,8 @@
 package com.photovaltscan.app.ui.screens.survey
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.photovaltscan.app.ui.theme.PrimaryBlue
+import com.photovaltscan.app.ui.components.MediaCaptureComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +27,8 @@ fun EquipmentSurveyScreen(
     onSaveSuccess: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var isNewEquipment by remember { mutableStateOf(false) }
+    var formKey by remember { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -49,7 +54,10 @@ fun EquipmentSurveyScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { /* TODO: Nuevo Equipo */ },
+                onClick = { 
+                    isNewEquipment = true
+                    formKey++
+                },
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
             ) {
@@ -83,8 +91,9 @@ fun EquipmentSurveyScreen(
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
+        key(formKey) {
+            Column(
+                modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(scrollState)
@@ -122,14 +131,14 @@ fun EquipmentSurveyScreen(
                 icon = Icons.Filled.ElectricalServices
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SurveyTextField(label = "Número de Medidor CFE", value = "U264AR", modifier = Modifier.weight(1f))
-                    SurveyTextField(label = "Medidores Internos", value = "3 medidores Schneider PM5300", modifier = Modifier.weight(1f))
+                    SurveyTextField(label = "Número de Medidor CFE", value = if (isNewEquipment) "" else "U264AR", modifier = Modifier.weight(1f))
+                    SurveyTextField(label = "Medidores Internos", value = if (isNewEquipment) "" else "3 medidores Schneider PM5300", modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                TransformerCard("Transformador 1 (T.F 1)", "750", "34,500V", "480Y/277V", "4.0")
+                TransformerCard("Transformador 1 (T.F 1)", if (isNewEquipment) "" else "750", if (isNewEquipment) "" else "34,500V", if (isNewEquipment) "" else "480Y/277V", if (isNewEquipment) "" else "4.0")
                 Spacer(modifier = Modifier.height(8.dp))
-                TransformerCard("Transformador 2 (T.F 2)", "750", "13,200V", "480Y/277V", "4.0")
+                TransformerCard("Transformador 2 (T.F 2)", if (isNewEquipment) "" else "750", if (isNewEquipment) "" else "13,200V", if (isNewEquipment) "" else "480Y/277V", if (isNewEquipment) "" else "4.0")
             }
 
             // 2. Tableros Principales
@@ -138,60 +147,184 @@ fun EquipmentSurveyScreen(
                 subtitle = "Especificaciones técnicas de interruptores y tableros principales",
                 icon = Icons.Filled.Bolt
             ) {
-                SwitchboardCard("Switchboard 1", "QEDCF126P", "480V", "1200", "PG1200", "65")
+                SwitchboardCard("Switchboard 1", if (isNewEquipment) "" else "QEDCF126P", if (isNewEquipment) "" else "480V", if (isNewEquipment) "" else "1200", if (isNewEquipment) "" else "PG1200", if (isNewEquipment) "" else "65")
                 Spacer(modifier = Modifier.height(8.dp))
-                SwitchboardCard("Switchboard 2", "QEDCF127P", "480V", "1200", "PJ1200", "65")
+                SwitchboardCard("Switchboard 2", if (isNewEquipment) "" else "QEDCF127P", if (isNewEquipment) "" else "480V", if (isNewEquipment) "" else "1200", if (isNewEquipment) "" else "PJ1200", if (isNewEquipment) "" else "65")
             }
 
-            // 3. Cubierta
+            // 3. MEDICIÓN
             SectionCard(
-                title = "3. Información de Cubierta, Parapetos y Pararrayos",
-                subtitle = "Características estructurales del techo, parapetos y protección contra rayos",
+                title = "3 - MEDICIÓN",
+                subtitle = "Datos generales de medición actual del cliente (CFE)",
+                icon = Icons.Filled.Speed
+            ) {
+                Text("Medición actual del cliente (CFE)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    CheckboxWithLabel(label = "Media tensión", initialChecked = if (isNewEquipment) false else true)
+                    CheckboxWithLabel(label = "Baja Tensión", initialChecked = false)
+                    CheckboxWithLabel(label = "Otro", initialChecked = false)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("¿Cuantos clientes tiene la nave?", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                var clientSliderPos by remember { mutableFloatStateOf(if (isNewEquipment) 0f else 1f) }
+                Slider(
+                    value = clientSliderPos,
+                    onValueChange = { clientSliderPos = it },
+                    valueRange = 0f..5f,
+                    steps = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("0", fontSize = 12.sp)
+                    Text("1", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                    Text("5", fontSize = 12.sp)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                SurveyDropdown(label = "¿Cuenta con más de una medición el edificio?", options = listOf("Sí", "No"), selected = if (isNewEquipment) "" else "No", modifier = Modifier.fillMaxWidth())
+
+                Spacer(modifier = Modifier.height(16.dp))
+                SurveyTextField(label = "Número de medidor", value = if (isNewEquipment) "" else "M586LM", modifier = Modifier.fillMaxWidth())
+
+                Spacer(modifier = Modifier.height(16.dp))
+                SurveyTextField(
+                    label = "Observaciones adicionales",
+                    value = if (isNewEquipment) "" else "• Nombre del cliente 1 y No. De medidor:\n• Nombre del cliente 2 y No. De medidor:\n• Nombre del cliente 3 y No. De medidor:\n• Nombre del cliente 4 y No. De medidor:",
+                    singleLine = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // 4. Cubierta
+            SectionCard(
+                title = "4 - Informacion general de cubierta",
+                subtitle = "Equipamiento de cubierta",
                 icon = Icons.Filled.Roofing
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SurveyDropdown(label = "Tipo de Recubrimiento", options = listOf("TPO (Termoplástico)", "PVC", "Lámina Galvanizada", "Concreto"), selected = "TPO (Termoplástico)", modifier = Modifier.weight(1f))
-                    SurveyTextField(label = "Rango de Altura", value = "2.20 a 0.80 m", modifier = Modifier.weight(1f))
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                    Text("4.1.1 - De manera general marcar en fotos las medidas de los obstáculos y equipos", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    MediaCaptureComponent { }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SurveyTextField(label = "Pendiente de Techo", value = "Pendiente de 2 aguas", modifier = Modifier.weight(1f))
-                    SurveyTextField(label = "Pararrayos / Antenas", value = "Sí (4 pararrayos)", modifier = Modifier.weight(1f))
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                    Text("4.1.2 - ¿El edificio cuenta con antenas o pararrayos en cubierta? (indicar en imágenes ubicación)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Column {
+                        CheckboxWithLabel(label = "Antenas", initialChecked = if (isNewEquipment) false else true)
+                        CheckboxWithLabel(label = "Pararrayos", initialChecked = if (isNewEquipment) false else true)
+                        CheckboxWithLabel(label = "Ambos", initialChecked = if (isNewEquipment) false else true)
+                        CheckboxWithLabel(label = "N/A", initialChecked = false)
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                SurveyTextField(
-                    label = "Observaciones de Equipos HVAC y Obstáculos",
-                    value = "Se identificaron 4 unidades paquete HVAC en el sector norte. Distancia mínima requerida de libranza para sistemas fotovoltaicos: 3.0 m.",
-                    singleLine = false,
-                    modifier = Modifier.fillMaxWidth()
-                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                        Text("4.1.3 - Imagen satelital o croquis de ubicación de las antenas y/o pararrayos", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        MediaCaptureComponent { }
+                    }
+                    Column(modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                        Text("4.1.4 - En caso de existir pretil, indicar ubicación y altura.", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SurveyTextField(
+                            label = "",
+                            value = if (isNewEquipment) "" else "Altura de pretil: es de más a menos 2.20 A 0.80\nAnexar fotografías de ubicación de pretil:",
+                            singleLine = false
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                    Text("4.1.5 - Marcar en fotografías la medida aproximada de la altura del pretil", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MediaCaptureComponent { }
+                        MediaCaptureComponent { }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                    Text("4.1.6 - Fotos generales de la cubierta del edificio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MediaCaptureComponent { }
+                        MediaCaptureComponent { }
+                        MediaCaptureComponent { }
+                        MediaCaptureComponent { }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                    Text("4.1.7 - Observaciones adicionales", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SurveyTextField(label = "", value = if (isNewEquipment) "" else "Existe una pendiente de 2 aguas", singleLine = false, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
             }
 
-            // 4. Punto de Interconexión
+            // 5. Fotografías y videos
             SectionCard(
-                title = "4. Punto de Interconexión y Cierre",
-                subtitle = "Punto óptimo de interconexión fotovoltaica y validación con cliente",
-                icon = Icons.Filled.Hub
+                title = "5 - Fotografías y vídeos de espacios en general",
+                subtitle = "Carpeta en One Drive",
+                icon = Icons.Filled.FolderShared
             ) {
-                SurveyDropdown(
-                    label = "Posible Punto de Interconexión",
-                    options = listOf("Tablero Principal", "Transformador", "Celda de Media Tensión"),
-                    selected = "Tablero Principal",
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                SurveyTextField(label = "Nombre del Guía", value = "Ing. Roberto Mendoza", modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                SurveyTextField(
-                    label = "Notas de Cierre y Verificación",
-                    value = "Recorrido completo realizado sin novedades. Se entregó copia preliminar de bitácora al cliente.",
-                    singleLine = false,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                    Text("5.1.1 Liga De One Drive", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SurveyTextField(label = "", value = if (isNewEquipment) "" else "https://beetmann0-my.sharepoint.com/personal/proyectos_beetmann_com/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fproyectos%5Fbeetmann%5Fcom%2FDocuments%2FPIRETH%2FINGENIERIAS%20PROLOGIS%202024%2FREY01202&viewid=2ba422a6%2D0718%2D47b3%2Db2c7%2D6b5a4df56b13", singleLine = false, modifier = Modifier.fillMaxWidth())
+                }
+            }
+
+            // 6. Información de cierre
+            SectionCard(
+                title = "6 - Información de cierre",
+                subtitle = "Cierre de levantamiento",
+                icon = Icons.Filled.Verified
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                        Text("6.1.1 Nombre de quien guio el recorrido en sitio por parte del cliente.", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SurveyTextField(label = "", value = if (isNewEquipment) "" else "NO SE SABE", modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(16.dp)) {
+                        Text("6.1.2 Se hizo el vuelo de Dron", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SurveyDropdown(label = "", options = listOf("Si", "No"), selected = if (isNewEquipment) "" else "Si", modifier = Modifier.fillMaxWidth())
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(64.dp))
         }
+        }
+    }
+}
+
+@Composable
+fun CheckboxWithLabel(label: String, initialChecked: Boolean) {
+    var checked by remember { mutableStateOf(initialChecked) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = { checked = it },
+            colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
+        )
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 

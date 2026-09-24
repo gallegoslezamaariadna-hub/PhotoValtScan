@@ -65,10 +65,10 @@ class AuthViewModel @Inject constructor(
 
             if (isRoleValid) {
                 prefs.edit().putString("current_user", employeeId).apply()
-                if (selectedTabIndex == 1) {
-                    _authState.value = AuthState.LoginSuccessAdmin
-                } else {
-                    _authState.value = AuthState.LoginSuccess
+                when (selectedTabIndex) {
+                    1 -> _authState.value = AuthState.LoginSuccessAdmin
+                    2 -> _authState.value = AuthState.LoginSuccessSupport
+                    else -> _authState.value = AuthState.LoginSuccess
                 }
             } else {
                 _authState.value = AuthState.Error("Acceso denegado: Tu perfil no corresponde a la pestaña seleccionada.")
@@ -87,6 +87,7 @@ sealed class AuthState {
     object Idle : AuthState()
     object LoginSuccess : AuthState()
     object LoginSuccessAdmin : AuthState()
+    object LoginSuccessSupport : AuthState()
     object RegisterSuccess : AuthState()
     data class Error(val message: String) : AuthState()
 }

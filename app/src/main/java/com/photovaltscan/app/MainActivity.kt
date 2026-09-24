@@ -21,6 +21,7 @@ import com.photovaltscan.app.ui.screens.survey.EquipmentSurveyScreen
 import com.photovaltscan.app.ui.screens.findings.FindingsScreen
 import com.photovaltscan.app.ui.screens.profile.ProfileScreen
 import com.photovaltscan.app.ui.screens.admin.AdminDashboardScreen
+import com.photovaltscan.app.ui.screens.support.SupportDashboardScreen
 import com.photovaltscan.app.ui.screens.sync.SyncScreen
 import com.photovaltscan.app.ui.screens.validation.ValidationScreen
 import com.photovaltscan.app.ui.theme.PhotoValtScanTheme
@@ -51,6 +52,11 @@ class MainActivity : ComponentActivity() {
                                         popUpTo("login") { inclusive = true }
                                     }
                                 },
+                                onLoginSuccessSupport = {
+                                    navController.navigate("support_dashboard") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
                                 onNavigateToRegister = {
                                     navController.navigate("register")
                                 }
@@ -58,6 +64,16 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("admin_dashboard") {
                             AdminDashboardScreen(
+                                onNavigateToProfile = { navController.navigate("profile") },
+                                onLogout = {
+                                    navController.navigate("login") {
+                                        popUpTo(0)
+                                    }
+                                }
+                            )
+                        }
+                        composable("support_dashboard") {
+                            SupportDashboardScreen(
                                 onNavigateToProfile = { navController.navigate("profile") },
                                 onLogout = {
                                     navController.navigate("login") {
@@ -82,6 +98,15 @@ class MainActivity : ComponentActivity() {
                             DashboardScreen(
                                 onProjectClick = { projectId ->
                                     navController.navigate("project_detail/$projectId")
+                                },
+                                onNavigateToProfile = { navController.navigate("profile") },
+                                onNavigateToSync = { navController.navigate("sync") },
+                                onNavigateToProjects = { navController.navigate("project_detail/PRJ-2023-089A") },
+                                onNavigateToReports = { navController.navigate("validation") },
+                                onLogout = {
+                                    navController.navigate("login") {
+                                        popUpTo(0)
+                                    }
                                 }
                             )
                         }
@@ -140,7 +165,15 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("sync") {
                             SyncScreen(
-                                onNavigateBack = { navController.popBackStack() }
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToDashboard = {
+                                    navController.navigate("dashboard") {
+                                        popUpTo("dashboard") { inclusive = false }
+                                    }
+                                },
+                                onNavigateToItem = { projectId ->
+                                    navController.navigate("project_detail/$projectId")
+                                }
                             )
                         }
                     }
